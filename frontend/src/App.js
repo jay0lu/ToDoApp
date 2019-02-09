@@ -1,33 +1,7 @@
 import React, { Component } from 'react';
 import Modal from "./components/Modal"
+import axios from "axios";
 import './App.css';
-
-const todoItems = [
-  {
-    id: 1,
-    title: "Go to Market",
-    description: "Buy ingredients to prepare dinner",
-    completed: true
-  },
-  {
-    id: 2,
-    title: "Study",
-    description: "Read Algebra and History textbook for upcoming test",
-    completed: false
-  },
-  {
-    id: 3,
-    title: "Sally's books",
-    description: "Go to library to rent sally's books",
-    completed: true
-  },
-  {
-    id: 4,
-    title: "Article",
-    description: "Write article on how to use django with react",
-    completed: false
-  }
-];
 
 class App extends Component {
   constructor(props) {
@@ -35,13 +9,24 @@ class App extends Component {
     this.state = {
       modal: false,
       viewCompleted: false,
-      todoList: todoItems,
+      todoList: [],
       activeItem: {
         title: "",
         description: "",
         completed: false
       }
     };
+  }
+
+  componentDidMount() {
+    this.refreshList();
+  }
+
+  refreshList = () => {
+    axios
+      .get("http://localhost:8000/api/todos/")
+      .then(res => this.setState({ todoList: res.data }))
+      .catch(err => console.log(err));
   }
 
   toggle = () => {
@@ -52,11 +37,20 @@ class App extends Component {
 
   handleSubmit = (item) => {
     this.toggle();
-    alert("Save" + JSON.stringify(item));
+    if (item.id) {
+      axios
+        .put(`http://localhost:8000/api/todos/${item.id}/`, item)
+        .then(res => this.refreshList());
+    }
+    axios
+      .post("http://localhost:8000/api/todos/", item)
+      .then(res => this.refreshList());
   }
 
   handleDelete = (item) => {
-    alert("Delete" + JSON.stringify(item));
+    axios
+      .delete(`http://localhost:8000/api/todos/${item.id}`)
+      .then(res => this.refreshList());
   }
 
   createItem = () => {
@@ -126,8 +120,11 @@ class App extends Component {
           {item.title}
         </span>
         <span>
-          <button className="btn btn-secondary mr-2" onClick={() => {this.editItem(item)}}>{"Edit"}</button>
-          <button className="btn btn-danger" onClick={() => {this.handleDelete(item)}}>{"Delete"}</button>
+          <button className="btn btn-secondary mr-2" onClick={() => {this.editItem(item)}}>
+            {" "}
+            Edit{" "}
+          </button>
+          <button className="btn btn-danger" onClick={() => {this.handleDelete(item)}}>{"Delete "}</button>
         </span>
       </li>
     ));
